@@ -8,8 +8,23 @@
             "Properties": {
                 "Handler": "listener::listener.Function::FunctionHandler",
                 "Runtime": "dotnetcore2.1",
-                "Policies": ["AWSLambdaSQSQueueExecutionRole"]
+                "Policies": ["AWSLambdaSQSQueueExecutionRole"],
+                "Events": {
+                    "mailQueueListener": {
+                        "Type": "SQS",
+                        "Properties": {
+                            "Queue": {
+                                "Fn::GetAtt": ["mailQueue", "Arn"]
+                            },
+                            "BatchSize": 10
+                        }
+                    }
+                }
             }
+        },
+        "mailQueue": {
+            "Type": "AWS::SQS::Queue",
+            "Properties": {}
         }
     }
 }
