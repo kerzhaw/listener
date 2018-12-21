@@ -8,7 +8,9 @@
             "Properties": {
                 "Handler": "listener::listener.Function::FunctionHandler",
                 "Runtime": "dotnetcore2.1",
-                "Policies": ["AWSLambdaSQSQueueExecutionRole"],
+                "Policies": ["AWSLambdaSQSQueueExecutionRole", "AmazonSESFullAccess"],
+                "MemorySize": 128,
+                "Timeout": 30,
                 "Events": {
                     "mailQueueListener": {
                         "Type": "SQS",

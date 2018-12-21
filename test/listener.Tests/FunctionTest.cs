@@ -4,11 +4,13 @@ using System.Threading.Tasks;
 using Xunit;
 using Amazon.Lambda.TestUtilities;
 using Amazon.Lambda.SQSEvents;
+using Newtonsoft.Json;
 
 namespace listener.Tests
 {
     public class FunctionTest
     {
+        [Fact]
         public async Task DeserializesMessage()
         {
 
@@ -20,7 +22,12 @@ namespace listener.Tests
 
             var emailMessage = new EmailMessage
             {
-
+                TemplateData = "{ \"name\":\"Alejandro\" }",
+                TemplateName = "Template1",
+                From = "paul@kerzhaw.com",
+                To = new List<string>{
+                    "paul@kerzhaw.com"
+                }
             };
 
             var sqsEvent = new SQSEvent
@@ -29,11 +36,13 @@ namespace listener.Tests
                 {
                     new SQSEvent.SQSMessage
                     {
-                        Body = "foobar"
+                        Body = JsonConvert.SerializeObject(emailMessage)
                     }
                 }
             };
 
+            var function = new Function();
+            await function.FunctionHandler(sqsEvent, context);
         }
 
         [Fact]

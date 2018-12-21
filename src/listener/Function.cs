@@ -1,8 +1,12 @@
+using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-
+using Amazon;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.SQSEvents;
+using Amazon.SimpleEmail;
+using Amazon.SimpleEmail.Model;
 using Newtonsoft.Json;
 
 
@@ -15,7 +19,7 @@ namespace listener
     {
         public string TemplateName { get; set; }
         public string TemplateData { get; set; }
-        public string[] To { get; set; }
+        public List<string> To { get; set; }
         public string From { get; set; }
     }
 
@@ -39,8 +43,10 @@ namespace listener
         /// <param name="evnt"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        public async Task FunctionHandler(SQSEvent evnt, ILambdaContext context, CancellationToken ct = default(CancellationToken))
+        public async Task FunctionHandler(SQSEvent evnt, ILambdaContext context)
         {
+            var ct = new CancellationToken();
+
             foreach (var message in evnt.Records)
             {
                 await ProcessMessageAsync(message, context, ct);
@@ -49,12 +55,21 @@ namespace listener
 
         private async Task ProcessMessageAsync(SQSEvent.SQSMessage message, ILambdaContext context, CancellationToken ct)
         {
-            var emailMessage = await Task.Factory.StartNew(() => JsonConvert.DeserializeObject<EmailMessage>(message.Body));
+            var emailMessage = await Task.Factory.StartNew(() => JsonConvert.DeserializeObject<EmailMessage>(message.Body), ct);
 
-            context.Logger.LogLine($"Processed message {message.Body}");
+            using (var client = new AmazonSimpleEmailServiceClient(RegionEndpoint.USEast1))
+            {
+                var request = new SendTemplatedEmailRequest
+                {
+                    ConfigurationSetName = "MailConfigurationSet",
+                    Destination = new Destination(emailMessage.To),
+                    Source = emailMessage.From,
+                    Template = emailMessage.TemplateName,
+                    TemplateData = emailMessage.TemplateData
+                };
 
-            // TODO: Do interesting work based on the new message
-            await Task.CompletedTask;
+                await client.SendTemplatedEmailAsync(request, ct);
+            }
         }
     }
 }
