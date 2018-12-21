@@ -1,0 +1,1 @@
+dotnet lambda deploy-serverless --project-location src\listener --persist-config-file false
