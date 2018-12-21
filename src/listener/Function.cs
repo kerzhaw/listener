@@ -25,6 +25,8 @@ namespace listener
 
     public class Function
     {
+        private readonly IAmazonSimpleEmailService _sesEmailClient;
+
         /// <summary>
         /// Default constructor. This constructor is used by Lambda to construct the instance. When invoked in a Lambda environment
         /// the AWS credentials will come from the IAM role associated with the function and the AWS region will be set to the
@@ -32,7 +34,10 @@ namespace listener
         /// </summary>
         public Function()
         {
+            var regionSetting = Environment.GetEnvironmentVariable("SESRegion") ?? "us-east-1";
+            var region = RegionEndpoint.GetBySystemName(regionSetting);
 
+            _sesEmailClient = new AmazonSimpleEmailServiceClient(region);
         }
 
 
@@ -57,19 +62,16 @@ namespace listener
         {
             var emailMessage = await Task.Factory.StartNew(() => JsonConvert.DeserializeObject<EmailMessage>(message.Body), ct);
 
-            using (var client = new AmazonSimpleEmailServiceClient(RegionEndpoint.USEast1))
+            var request = new SendTemplatedEmailRequest
             {
-                var request = new SendTemplatedEmailRequest
-                {
-                    ConfigurationSetName = "MailConfigurationSet",
-                    Destination = new Destination(emailMessage.To),
-                    Source = emailMessage.From,
-                    Template = emailMessage.TemplateName,
-                    TemplateData = emailMessage.TemplateData
-                };
+                ConfigurationSetName = "MailConfigurationSet",
+                Destination = new Destination(emailMessage.To),
+                Source = emailMessage.From,
+                Template = emailMessage.TemplateName,
+                TemplateData = emailMessage.TemplateData
+            };
 
-                await client.SendTemplatedEmailAsync(request, ct);
-            }
+            await _sesEmailClient.SendTemplatedEmailAsync(request, ct);
         }
     }
 }

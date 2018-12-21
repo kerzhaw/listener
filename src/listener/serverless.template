@@ -21,6 +21,11 @@
                             "BatchSize": 10
                         }
                     }
+                },
+                "Environment": {
+                    "Variables": {
+                        "SESRegion": "us-east-1"
+                    }
                 }
             }
         },
