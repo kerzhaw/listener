@@ -9,6 +9,33 @@ namespace listener.Tests
 {
     public class FunctionTest
     {
+        public async Task DeserializesMessage()
+        {
+
+            var logger = new TestLambdaLogger();
+            var context = new TestLambdaContext
+            {
+                Logger = logger
+            };
+
+            var emailMessage = new EmailMessage
+            {
+
+            };
+
+            var sqsEvent = new SQSEvent
+            {
+                Records = new List<SQSEvent.SQSMessage>
+                {
+                    new SQSEvent.SQSMessage
+                    {
+                        Body = "foobar"
+                    }
+                }
+            };
+
+        }
+
         [Fact]
         public async Task TestSQSEventLambdaFunction()
         {

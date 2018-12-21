@@ -1,7 +1,9 @@
+using System.Threading;
 using System.Threading.Tasks;
 
 using Amazon.Lambda.Core;
 using Amazon.Lambda.SQSEvents;
+using Newtonsoft.Json;
 
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
@@ -9,6 +11,14 @@ using Amazon.Lambda.SQSEvents;
 
 namespace listener
 {
+    public class EmailMessage
+    {
+        public string TemplateName { get; set; }
+        public string TemplateData { get; set; }
+        public string[] To { get; set; }
+        public string From { get; set; }
+    }
+
     public class Function
     {
         /// <summary>
@@ -29,16 +39,18 @@ namespace listener
         /// <param name="evnt"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        public async Task FunctionHandler(SQSEvent evnt, ILambdaContext context)
+        public async Task FunctionHandler(SQSEvent evnt, ILambdaContext context, CancellationToken ct = default(CancellationToken))
         {
             foreach (var message in evnt.Records)
             {
-                await ProcessMessageAsync(message, context);
+                await ProcessMessageAsync(message, context, ct);
             }
         }
 
-        private async Task ProcessMessageAsync(SQSEvent.SQSMessage message, ILambdaContext context)
+        private async Task ProcessMessageAsync(SQSEvent.SQSMessage message, ILambdaContext context, CancellationToken ct)
         {
+            var emailMessage = await Task.Factory.StartNew(() => JsonConvert.DeserializeObject<EmailMessage>(message.Body));
+
             context.Logger.LogLine($"Processed message {message.Body}");
 
             // TODO: Do interesting work based on the new message
