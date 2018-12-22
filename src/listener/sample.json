@@ -1,8 +1,0 @@
-{
-    "TemplateName": "Template1",
-    "TemplateData": "{ \"name\":\"Alejandro\" }",
-    "To": [
-        "paul@kerzhaw.com"
-    ],
-    "From": "paul@kerzhaw.com"
-}
