@@ -15,7 +15,7 @@
   "function-timeout": 30,
   "function-handler": "listener::listener.Function::FunctionHandler",
   "template": "serverless.template",
-  "s3-bucket": "kerzhaw-s3-bucket",
+  "s3-bucket": "kerzhaw-s3-bucket-us-east-1",
   "s3-prefix": "listener/",
   "stack-name": "listener"
 }
