@@ -15,6 +15,7 @@ using Xunit;
 using System.Threading;
 using System.Net;
 using System.Net.Http;
+using listener.Models;
 
 namespace listener.Tests
 {
@@ -114,7 +115,26 @@ namespace listener.Tests
         }
 
         [Fact]
-        public async Task ProcessSubscriptionConfirmationMessageType_Happy()
+        public async Task ProcessSubscriptionConfirmationMessageType_Happy_Notification()
+        {
+            var jsonBody = await File.ReadAllTextAsync(
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "sample-notification.json")
+            );
+
+            var mockContextAccessor = await CreateMockContextAccessor(new Dictionary<string, string>
+            {
+                {HeaderNames.UserAgent, ListenerController.AwsSnsUserAgentHeaderValue},
+                {ListenerController.AwsSnsMessageTypeHeaderName, NotificationModel.AwsSnsMessageTypeHeaderValue}
+            }, jsonBody);
+
+            var controller = new ListenerController(mockContextAccessor, MockLogger, new Mock<IListenerHttpClient>().Object);
+            var result = await controller.PostAsync() as StatusCodeResult;
+
+            Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
+        }
+
+        [Fact]
+        public async Task ProcessSubscriptionConfirmationMessageType_Happy_SubscriptionConfirmation()
         {
             var jsonBody = await File.ReadAllTextAsync(
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "sample-subscription-confirmation.json")
@@ -123,13 +143,16 @@ namespace listener.Tests
             var mockContextAccessor = await CreateMockContextAccessor(new Dictionary<string, string>
             {
                 {HeaderNames.UserAgent, ListenerController.AwsSnsUserAgentHeaderValue},
-                {ListenerController.AwsSnsMessageTypeHeaderName, ListenerController.AwsSnsMessageTypeHeaderValueSubscriptionConfirmation}
+                {ListenerController.AwsSnsMessageTypeHeaderName, SubscriptionConfirmationModel.AwsSnsMessageTypeHeaderValue}
             }, jsonBody);
 
             var mockClient = new Mock<IListenerHttpClient>();
             mockClient
                 .Setup(x => x.GetAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK))
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("")
+                })
                 .Verifiable();
 
             var controller = new ListenerController(mockContextAccessor, MockLogger, mockClient.Object);

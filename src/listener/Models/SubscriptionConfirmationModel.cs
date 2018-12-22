@@ -1,4 +1,14 @@
 /*
+POST / HTTP/1.1
+x-amz-sns-message-type: SubscriptionConfirmation
+x-amz-sns-message-id: 165545c9-2a5c-472c-8df2-7ff2be2b3b1b
+x-amz-sns-topic-arn: arn:aws:sns:us-west-2:123456789012:MyTopic
+Content-Length: 1336
+Content-Type: text/plain; charset=UTF-8
+Host: myhost.example.com
+Connection: Keep-Alive
+User-Agent: Amazon Simple Notification Service Agent
+
 {
   "Type" : "SubscriptionConfirmation",
   "MessageId" : "165545c9-2a5c-472c-8df2-7ff2be2b3b1b",
@@ -13,16 +23,16 @@
   }
  */
 using System;
-using System.ComponentModel.DataAnnotations;
 
 namespace listener.Models
 {
     public class SubscriptionConfirmationModel
     {
+        public const string AwsSnsMessageTypeHeaderValue = "SubscriptionConfirmation";
+
         /// <summary>
         /// A string that describes the message. (remember to de-escape)
         /// </summary>
-        [Required(AllowEmptyStrings = false)]
         public string Message { get; set; }
 
         /// <summary>
@@ -30,26 +40,22 @@ namespace listener.Models
         /// For a message that Amazon SNS resends during a retry, the message ID 
         /// of the original message is used.
         /// </summary>
-        [Required]
         public Guid MessageId { get; set; }
 
         /// <summary>
         /// Base64-encoded "SHA1withRSA" signature of the Message, MessageId, 
         /// Type, Timestamp, and TopicArn values.
-        /// <value></value>
-        [Required(AllowEmptyStrings = false)]
+        /// </summary>
         public string Signature { get; set; }
 
         /// <summary>
         /// Version of the Amazon SNS signature used.
         /// </summary>
-        [Required(AllowEmptyStrings = false)]
         public string SignatureVersion { get; set; }
 
         /// <summary>
         /// The URL to the certificate that was used to sign the message.
         /// </summary>
-        [Required]
         public Uri SigningCertURL { get; set; }
 
         /// <summary>
@@ -57,13 +63,11 @@ namespace listener.Models
         /// Alternatively, you can instead use the Token with the 
         /// ConfirmSubscription action to confirm the subscription.
         /// </summary>
-        [Required]
         public Uri SubscribeURL { get; set; }
 
         /// <summary>
         /// The time (GMT) when the subscription confirmation was sent.
         /// </summary>
-        [Required]
         public string Timestamp { get; set; }
 
         /// <summary>
@@ -71,23 +75,18 @@ namespace listener.Models
         /// the subscription. Alternatively, you can simply visit the 
         /// SubscribeURL.
         /// </summary>
-        [Required(AllowEmptyStrings = false)]
         public string Token { get; set; }
 
         /// <summary>
         /// The Amazon Resource Name (ARN) for the topic that this endpoint is 
         /// subscribed to.
         /// </summary>
-        /// <value></value>
-        [Required(AllowEmptyStrings = false)]
         public string TopicArn { get; set; }
 
         /// <summary>
         /// The type of message. For a subscription confirmation, the type is 
         /// SubscriptionConfirmation.
         /// </summary>
-        /// <value></value>
-        [Required(AllowEmptyStrings = false)]
         public string Type { get; set; }
     }
 }

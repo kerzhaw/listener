@@ -17,7 +17,6 @@ namespace listener.Controllers
     public class ListenerController : Controller
     {
         public const string AwsSnsMessageTypeHeaderName = "x-amz-sns-message-type";
-        public const string AwsSnsMessageTypeHeaderValueSubscriptionConfirmation = "SubscriptionConfirmation";
         public const string AwsSnsUserAgentHeaderValue = "Amazon Simple Notification Service Agent";
 
         private readonly IHttpContextAccessor _contextAccessor;
@@ -32,13 +31,6 @@ namespace listener.Controllers
             _contextAccessor = contextAccessor;
             _logger = logger;
             _httpClient = httpClient;
-        }
-
-        public async Task<IActionResult> GetAsync(CancellationToken ct)
-        {
-            _logger.LogInformation("Just letting you know this works!");
-            await Task.CompletedTask;
-            return Ok("It works");
         }
 
         private async Task<TModel> ReadModelAsync<TModel>(CancellationToken ct)
@@ -63,7 +55,9 @@ namespace listener.Controllers
                 if (!response.IsSuccessStatusCode)
                     return BadRequest();
 
-                _logger.LogInformation("Subscription confirmed");
+                var content = response.Content.ReadAsStringAsync();
+                _logger.LogInformation($"Subscription confirmed: {content}");
+
                 return Ok();
             }
             catch (Exception)
@@ -71,6 +65,16 @@ namespace listener.Controllers
                 return BadRequest();
             }
         }
+
+        private async Task<IActionResult> ProcessNotificationMessageType(CancellationToken ct)
+        {
+            var model = await ReadModelAsync<NotificationModel>(ct);
+
+            _logger.LogInformation($"Message received: {model.Message}");
+
+            return Ok();
+        }
+
 
         [HttpPost]
         public async Task<IActionResult> PostAsync(CancellationToken ct = default(CancellationToken))
@@ -86,10 +90,16 @@ namespace listener.Controllers
             if (!request.Headers.TryGetValue(AwsSnsMessageTypeHeaderName, out var messageType))
                 return BadRequest();
 
-            if (messageType.Equals(AwsSnsMessageTypeHeaderValueSubscriptionConfirmation))
+            if (messageType.Equals(SubscriptionConfirmationModel.AwsSnsMessageTypeHeaderValue))
             {
                 // SubscriptionConfirmation
                 return await ProcessSubscriptionConfirmationMessageType(ct);
+            }
+
+            if (messageType.Equals(NotificationModel.AwsSnsMessageTypeHeaderValue))
+            {
+                // SubscriptionConfirmation
+                return await ProcessNotificationMessageType(ct);
             }
 
             return BadRequest();
