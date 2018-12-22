@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace listener.Controllers
 {
@@ -9,16 +10,19 @@ namespace listener.Controllers
     public class ListenerController : Controller
     {
         private readonly IHttpContextAccessor _contextAccessor;
+        private readonly ILogger<ListenerController> _logger;
 
-        public ListenerController(IHttpContextAccessor contextAccessor)
+        public ListenerController(IHttpContextAccessor contextAccessor, ILogger<ListenerController> logger)
         {
             _contextAccessor = contextAccessor;
+            _logger = logger;
         }
 
         public async Task<IActionResult> GetAsync(CancellationToken ct = default(CancellationToken))
         {
+            _logger.LogInformation("Just letting you know this works!");
             await Task.CompletedTask;
-            return Ok();
+            return Ok("It works");
         }
 
         private async Task<IActionResult> ProcessSubscriptionConfirmationMessageType()

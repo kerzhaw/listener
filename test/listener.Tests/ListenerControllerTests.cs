@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using listener.Controllers;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Moq;
 using Xunit;
@@ -10,6 +12,12 @@ namespace listener.Tests
 {
     public class ListenerControllerTests
     {
+        private static readonly ILogger<ListenerController> mockLogger;
+
+        static ListenerControllerTests()
+        {
+            mockLogger = new Mock<ILogger<ListenerController>>().Object;
+        }
 
         private IHttpContextAccessor CreateMockContextAccessor(IDictionary<string, string> headers)
         {
@@ -36,9 +44,10 @@ namespace listener.Tests
                 {"x-amz-sns-message-type","SubscriptionConfirmation"}
             });
 
-            var controller = new ListenerController(mockContextAccessor);
+            var controller = new ListenerController(mockContextAccessor, mockLogger);
+            var result = await controller.PostAsync() as StatusCodeResult;
 
-            await controller.PostAsync();
+            Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
         }
 
 
