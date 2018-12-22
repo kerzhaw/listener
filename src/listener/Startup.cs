@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Amazon.SimpleEmail;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -13,8 +10,6 @@ namespace listener
 {
     public class Startup
     {
-        public const string AppS3BucketKey = "AppS3Bucket";
-
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -26,14 +21,24 @@ namespace listener
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
-
-            // Add S3 to the ASP.NET Core dependency injection framework.
-            services.AddAWSService<Amazon.S3.IAmazonS3>();
+            services.AddDefaultAWSOptions(Configuration.GetAWSOptions());
+            services.AddAWSService<IAmazonSimpleEmailService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
+            // Create a logging provider based on the configuration information passed through the appsettings.json
+            loggerFactory.AddLambdaLogger(Configuration.GetLambdaLoggerOptions());
+
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(env.ContentRootPath)
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{env.EnvironmentName ?? "Development"}.json", optional: true)
+                .AddEnvironmentVariables();
+
+            Configuration = builder.Build();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

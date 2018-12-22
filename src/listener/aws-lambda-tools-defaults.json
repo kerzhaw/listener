@@ -1,6 +1,5 @@
-
 {
-	"Information" : [
+	"Information": [
 		"This file provides default values for the deployment wizard inside Visual Studio and the AWS Lambda commands added to the .NET Core CLI.",
 		"To learn more about the Lambda commands with the .NET Core CLI execute the following command at the command line in the project root directory.",
 
@@ -8,12 +7,14 @@
 
 		"All the command line options for the Lambda command can be specified in this file."
 	],
-	
-    "profile":"",
-    "region" : "",
-	"configuration" : "Release",
-	"framework"     : "netcoreapp2.1",
-	"s3-prefix"     : "listener/",
-	"template"      : "serverless.template",
-	"template-parameters" : "ShouldCreateBucket=true;BucketName="
+
+	"profile": "mail-receiver",
+	"region": "us-east-1",
+	"configuration": "Debug",
+	"framework": "netcoreapp2.1",
+	"s3-bucket": "kerzhaw-s3-bucket-us-east-1",
+	"s3-prefix": "mail-receiver/",
+	"template": "serverless.template",
+	"template-parameters": "",
+	"stack-name": "mail-receiver"
 }
