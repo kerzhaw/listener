@@ -1,4 +1,4 @@
-﻿using Amazon.SimpleEmail;
+﻿using listener.Clients;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -24,8 +24,7 @@ namespace listener
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddDefaultAWSOptions(Configuration.GetAWSOptions());
-            services.AddAWSService<IAmazonSimpleEmailService>();
-            services.AddHttpClient();
+            services.TryAddSingleton<IListenerHttpClient, ListenerHttpClient>();
             services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         }
 

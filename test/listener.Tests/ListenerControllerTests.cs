@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using listener.Controllers;
+using listener.Clients;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -12,6 +12,9 @@ using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 using Moq;
 using Xunit;
+using System.Threading;
+using System.Net;
+using System.Net.Http;
 
 namespace listener.Tests
 {
@@ -66,7 +69,7 @@ namespace listener.Tests
                 {HeaderNames.UserAgent,"Dis a bad user agent mon"}
             });
 
-            var controller = new ListenerController(mockContextAccessor, MockLogger, new Mock<IHttpClientFactory>().Object);
+            var controller = new ListenerController(mockContextAccessor, MockLogger, new Mock<IListenerHttpClient>().Object);
             var result = await controller.PostAsync() as StatusCodeResult;
 
             Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
@@ -77,7 +80,7 @@ namespace listener.Tests
         {
             var mockContextAccessor = await CreateMockContextAccessor(new Dictionary<string, string>());
 
-            var controller = new ListenerController(mockContextAccessor, MockLogger, new Mock<IHttpClientFactory>().Object);
+            var controller = new ListenerController(mockContextAccessor, MockLogger, new Mock<IListenerHttpClient>().Object);
             var result = await controller.PostAsync() as StatusCodeResult;
 
             Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
@@ -90,7 +93,7 @@ namespace listener.Tests
                 {HeaderNames.UserAgent, ListenerController.AwsSnsUserAgentHeaderValue}
             });
 
-            var controller = new ListenerController(mockContextAccessor, MockLogger, new Mock<IHttpClientFactory>().Object);
+            var controller = new ListenerController(mockContextAccessor, MockLogger, new Mock<IListenerHttpClient>().Object);
             var result = await controller.PostAsync() as StatusCodeResult;
 
             Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
@@ -104,7 +107,7 @@ namespace listener.Tests
                 {ListenerController.AwsSnsMessageTypeHeaderName, "Bad value"}
             });
 
-            var controller = new ListenerController(mockContextAccessor, MockLogger, new Mock<IHttpClientFactory>().Object);
+            var controller = new ListenerController(mockContextAccessor, MockLogger, new Mock<IListenerHttpClient>().Object);
             var result = await controller.PostAsync() as StatusCodeResult;
 
             Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
@@ -123,9 +126,16 @@ namespace listener.Tests
                 {ListenerController.AwsSnsMessageTypeHeaderName, ListenerController.AwsSnsMessageTypeHeaderValueSubscriptionConfirmation}
             }, jsonBody);
 
-            var controller = new ListenerController(mockContextAccessor, MockLogger, new Mock<IHttpClientFactory>().Object);
+            var mockClient = new Mock<IListenerHttpClient>();
+            mockClient
+                .Setup(x => x.GetAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK))
+                .Verifiable();
+
+            var controller = new ListenerController(mockContextAccessor, MockLogger, mockClient.Object);
             var result = await controller.PostAsync() as StatusCodeResult;
 
+            mockClient.Verify(x => x.GetAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>()));
             Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
         }
 

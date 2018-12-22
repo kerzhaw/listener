@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using listener.Clients;
 using listener.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -22,26 +22,26 @@ namespace listener.Controllers
 
         private readonly IHttpContextAccessor _contextAccessor;
         private readonly ILogger<ListenerController> _logger;
-        private readonly HttpClient _httpClient;
+        private readonly IListenerHttpClient _httpClient;
 
         public ListenerController(
             IHttpContextAccessor contextAccessor,
             ILogger<ListenerController> logger,
-            IHttpClientFactory httpClientFactory)
+            IListenerHttpClient httpClient)
         {
             _contextAccessor = contextAccessor;
             _logger = logger;
-            _httpClient = httpClientFactory.CreateClient();
+            _httpClient = httpClient;
         }
 
-        public async Task<IActionResult> GetAsync(CancellationToken ct = default(CancellationToken))
+        public async Task<IActionResult> GetAsync(CancellationToken ct)
         {
             _logger.LogInformation("Just letting you know this works!");
             await Task.CompletedTask;
             return Ok("It works");
         }
 
-        private async Task<TModel> ReadModelAsync<TModel>(CancellationToken ct = default(CancellationToken))
+        private async Task<TModel> ReadModelAsync<TModel>(CancellationToken ct)
             where TModel : class
         {
             using (var streamReader = new StreamReader(_contextAccessor.HttpContext.Request.Body))
@@ -52,13 +52,13 @@ namespace listener.Controllers
             }
         }
 
-        private async Task<IActionResult> ProcessSubscriptionConfirmationMessageType(CancellationToken ct = default(CancellationToken))
+        private async Task<IActionResult> ProcessSubscriptionConfirmationMessageType(CancellationToken ct)
         {
-            var model = await ReadModelAsync<SubscriptionConfirmationModel>();
+            var model = await ReadModelAsync<SubscriptionConfirmationModel>(ct);
 
             try
             {
-                var response = await _httpClient.GetAsync(model.SubscribeURL);
+                var response = await _httpClient.GetAsync(model.SubscribeURL, ct);
 
                 if (!response.IsSuccessStatusCode)
                     return BadRequest();
