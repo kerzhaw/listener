@@ -11,11 +11,11 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 using Moq;
-using Xunit;
 using System.Threading;
 using System.Net;
 using System.Net.Http;
 using listener.Models;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace listener.Tests
 {
@@ -59,10 +59,11 @@ namespace listener.Tests
         }
     }
 
+    [TestClass]
     public class ListenerControllerTests : ListenerControllerTestsBase
     {
 
-        [Fact]
+        [TestMethod]
         public async Task ProcessSubscriptionConfirmationMessageType_Returns_400_For_Bad_UserAgent()
         {
             var mockContextAccessor = await CreateMockContextAccessor(new Dictionary<string, string>
@@ -73,10 +74,10 @@ namespace listener.Tests
             var controller = new ListenerController(mockContextAccessor, MockLogger, new Mock<IListenerHttpClient>().Object);
             var result = await controller.PostAsync() as StatusCodeResult;
 
-            Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+            Assert.AreEqual(StatusCodes.Status400BadRequest, result.StatusCode);
         }
 
-        [Fact]
+        [TestMethod]
         public async Task ProcessSubscriptionConfirmationMessageType_Returns_400_For_Missing_UserAgent()
         {
             var mockContextAccessor = await CreateMockContextAccessor(new Dictionary<string, string>());
@@ -84,10 +85,10 @@ namespace listener.Tests
             var controller = new ListenerController(mockContextAccessor, MockLogger, new Mock<IListenerHttpClient>().Object);
             var result = await controller.PostAsync() as StatusCodeResult;
 
-            Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+            Assert.AreEqual(StatusCodes.Status400BadRequest, result.StatusCode);
         }
 
-        [Fact]
+        [TestMethod]
         public async Task ProcessSubscriptionConfirmationMessageType_Returns_400_For_Missing_MessageType_Header()
         {
             var mockContextAccessor = await CreateMockContextAccessor(new Dictionary<string, string>{
@@ -97,10 +98,10 @@ namespace listener.Tests
             var controller = new ListenerController(mockContextAccessor, MockLogger, new Mock<IListenerHttpClient>().Object);
             var result = await controller.PostAsync() as StatusCodeResult;
 
-            Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+            Assert.AreEqual(StatusCodes.Status400BadRequest, result.StatusCode);
         }
 
-        [Fact]
+        [TestMethod]
         public async Task ProcessSubscriptionConfirmationMessageType_Returns_400_For_Bad_MessageType_Header()
         {
             var mockContextAccessor = await CreateMockContextAccessor(new Dictionary<string, string>{
@@ -111,10 +112,10 @@ namespace listener.Tests
             var controller = new ListenerController(mockContextAccessor, MockLogger, new Mock<IListenerHttpClient>().Object);
             var result = await controller.PostAsync() as StatusCodeResult;
 
-            Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
+            Assert.AreEqual(StatusCodes.Status400BadRequest, result.StatusCode);
         }
 
-        [Fact]
+        [TestMethod]
         public async Task ProcessSubscriptionConfirmationMessageType_Happy_Notification()
         {
             var jsonBody = await File.ReadAllTextAsync(
@@ -130,10 +131,10 @@ namespace listener.Tests
             var controller = new ListenerController(mockContextAccessor, MockLogger, new Mock<IListenerHttpClient>().Object);
             var result = await controller.PostAsync() as StatusCodeResult;
 
-            Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
+            Assert.AreEqual(StatusCodes.Status200OK, result.StatusCode);
         }
 
-        [Fact]
+        [TestMethod]
         public async Task ProcessSubscriptionConfirmationMessageType_Happy_SubscriptionConfirmation()
         {
             var jsonBody = await File.ReadAllTextAsync(
@@ -159,7 +160,7 @@ namespace listener.Tests
             var result = await controller.PostAsync() as StatusCodeResult;
 
             mockClient.Verify(x => x.GetAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>()));
-            Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
+            Assert.AreEqual(StatusCodes.Status200OK, result.StatusCode);
         }
 
 
