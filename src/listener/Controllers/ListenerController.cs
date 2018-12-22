@@ -63,6 +63,7 @@ namespace listener.Controllers
                 if (!response.IsSuccessStatusCode)
                     return BadRequest();
 
+                _logger.LogInformation("Subscription confirmed");
                 return Ok();
             }
             catch (Exception)

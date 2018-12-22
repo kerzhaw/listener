@@ -30,26 +30,26 @@
       }
     },
 
-    // "topic": {
-    //   "Type": "AWS::SNS::Topic",
-    //   "Properties": {
-    //     "DisplayName": "mail-queue",
-    //     "TopicName": "mail-queue"
-    //   }
-    // },
+    "topic": {
+      "Type": "AWS::SNS::Topic",
+      "Properties": {
+        "DisplayName": "mail-queue",
+        "TopicName": "mail-queue"
+      }
+    },
 
-    // "listenerSubscription": {
-    //   "Type": "AWS::SNS::Subscription",
-    //   "Properties": {
-    //     "Endpoint": {
-    //       "Fn::Sub": "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
-    //     },
-    //     "Protocol": "https",
-    //     "TopicArn": {
-    //       "Ref": "topic"
-    //     }
-    //   }
-    // }
+    "listenerSubscription": {
+      "Type": "AWS::SNS::Subscription",
+      "Properties": {
+        "Endpoint": {
+          "Fn::Sub": "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/api/listener"
+        },
+        "Protocol": "https",
+        "TopicArn": {
+          "Ref": "topic"
+        }
+      }
+    }
 
   },
 
