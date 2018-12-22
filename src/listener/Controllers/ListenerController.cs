@@ -3,12 +3,17 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Net.Http.Headers;
 
 namespace listener.Controllers
 {
     [Route("api/[controller]")]
     public class ListenerController : Controller
     {
+        public const string AwsSnsMessageTypeHeaderName = "x-amz-sns-message-type";
+        public const string AwsSnsMessageTypeHeaderValueSubscriptionConfirmation = "SubscriptionConfirmation";
+        public const string AwsSnsUserAgentHeaderValue = "Amazon Simple Notification Service Agent";
+
         private readonly IHttpContextAccessor _contextAccessor;
         private readonly ILogger<ListenerController> _logger;
 
@@ -25,7 +30,7 @@ namespace listener.Controllers
             return Ok("It works");
         }
 
-        private async Task<IActionResult> ProcessSubscriptionConfirmationMessageType()
+        private async Task<IActionResult> ProcessSubscriptionConfirmationMessageType(CancellationToken ct = default(CancellationToken))
         {
             await Task.CompletedTask;
             return BadRequest();
@@ -36,13 +41,19 @@ namespace listener.Controllers
         {
             var request = _contextAccessor.HttpContext.Request;
 
-            if (!request.Headers.TryGetValue("x-amz-sns-message-type", out var messageType))
+            if (!request.Headers.TryGetValue(HeaderNames.UserAgent, out var userAgent))
                 return BadRequest();
 
-            if (messageType.Equals("SubscriptionConfirmation"))
+            if (!userAgent.Equals(AwsSnsUserAgentHeaderValue))
+                return BadRequest();
+
+            if (!request.Headers.TryGetValue(AwsSnsMessageTypeHeaderName, out var messageType))
+                return BadRequest();
+
+            if (messageType.Equals(AwsSnsMessageTypeHeaderValueSubscriptionConfirmation))
             {
                 // SubscriptionConfirmation
-                return await ProcessSubscriptionConfirmationMessageType();
+                return await ProcessSubscriptionConfirmationMessageType(ct);
             }
 
             return BadRequest();
