@@ -13,6 +13,8 @@ using System.Net;
 using System.Net.Http;
 using listener.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Amazon.SimpleEmail;
+using Amazon.SimpleEmail.Model;
 
 namespace listener.Tests
 {
@@ -27,7 +29,7 @@ namespace listener.Tests
                 {HeaderNames.UserAgent,"Dis a bad user agent mon"}
             });
 
-            var controller = new ListenerController(mockContextAccessor, MockLogger, MockClient, MockSesClient);
+            var controller = CreateController(mockContextAccessor);
             var result = await controller.PostAsync() as StatusCodeResult;
 
             Assert.AreEqual(StatusCodes.Status400BadRequest, result.StatusCode);
@@ -38,7 +40,7 @@ namespace listener.Tests
         {
             var mockContextAccessor = await CreateMockContextAccessor(new Dictionary<string, string>());
 
-            var controller = new ListenerController(mockContextAccessor, MockLogger, MockClient, MockSesClient);
+            var controller = CreateController(mockContextAccessor);
             var result = await controller.PostAsync() as StatusCodeResult;
 
             Assert.AreEqual(StatusCodes.Status400BadRequest, result.StatusCode);
@@ -51,7 +53,7 @@ namespace listener.Tests
                 {HeaderNames.UserAgent, ListenerController.AwsSnsUserAgentHeaderValue}
             });
 
-            var controller = new ListenerController(mockContextAccessor, MockLogger, MockClient, MockSesClient);
+            var controller = CreateController(mockContextAccessor);
             var result = await controller.PostAsync() as StatusCodeResult;
 
             Assert.AreEqual(StatusCodes.Status400BadRequest, result.StatusCode);
@@ -65,7 +67,7 @@ namespace listener.Tests
                 {ListenerController.AwsSnsMessageTypeHeaderName, "Bad value"}
             });
 
-            var controller = new ListenerController(mockContextAccessor, MockLogger, MockClient, MockSesClient);
+            var controller = CreateController(mockContextAccessor);
             var result = await controller.PostAsync() as StatusCodeResult;
 
             Assert.AreEqual(StatusCodes.Status400BadRequest, result.StatusCode);
@@ -84,9 +86,12 @@ namespace listener.Tests
                 {ListenerController.AwsSnsMessageTypeHeaderName, NotificationModel.AwsSnsMessageTypeHeaderValue}
             }, jsonBody);
 
-            var controller = new ListenerController(mockContextAccessor, MockLogger, MockClient, MockSesClient);
+            var mockSesClient = new Mock<IAmazonSimpleEmailService>();
+
+            var controller = new ListenerController(mockContextAccessor, MockLogger, MockHttpClient, mockSesClient.Object);
             var result = await controller.PostAsync() as StatusCodeResult;
 
+            mockSesClient.Verify(x => x.SendTemplatedEmailAsync(It.IsAny<SendTemplatedEmailRequest>(), It.IsAny<CancellationToken>()));
             Assert.AreEqual(StatusCodes.Status200OK, result.StatusCode);
         }
 
@@ -112,7 +117,7 @@ namespace listener.Tests
                 })
                 .Verifiable();
 
-            var controller = new ListenerController(mockContextAccessor, MockLogger, mockClient.Object, MockSesClient);
+            var controller = CreateController(mockContextAccessor, mockClient.Object);
             var result = await controller.PostAsync() as StatusCodeResult;
 
             Assert.AreEqual(StatusCodes.Status200OK, result.StatusCode);

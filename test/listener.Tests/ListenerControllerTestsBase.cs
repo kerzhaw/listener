@@ -15,17 +15,28 @@ namespace listener.Tests
     public abstract class ListenerControllerTestsBase
     {
         protected static readonly ILogger<ListenerController> MockLogger;
-        protected static readonly IListenerHttpClient MockClient;
+        protected static readonly IListenerHttpClient MockHttpClient;
         protected static readonly IAmazonSimpleEmailService MockSesClient;
 
         static ListenerControllerTestsBase()
         {
             MockLogger = new Mock<ILogger<ListenerController>>().Object;
-            MockClient = new Mock<IListenerHttpClient>().Object;
+            MockHttpClient = new Mock<IListenerHttpClient>().Object;
             MockSesClient = new Mock<IAmazonSimpleEmailService>().Object;
         }
 
-        protected async Task<IHttpContextAccessor> CreateMockContextAccessor(IDictionary<string, string> headers, string jsonBody = null)
+        protected ListenerController CreateController(IHttpContextAccessor contextAccessor)
+                => new ListenerController(contextAccessor, MockLogger, MockHttpClient, MockSesClient);
+
+        protected ListenerController CreateController(IHttpContextAccessor contextAccessor, IListenerHttpClient httpClient)
+            => new ListenerController(contextAccessor, MockLogger, httpClient, MockSesClient);
+
+        protected ListenerController CreateController(IHttpContextAccessor contextAccessor, IAmazonSimpleEmailService sesClient)
+            => new ListenerController(contextAccessor, MockLogger, MockHttpClient, sesClient);
+
+        protected async Task<IHttpContextAccessor> CreateMockContextAccessor(
+            IDictionary<string, string> headers,
+            string jsonBody = null)
         {
             var contextAccessor = new Mock<IHttpContextAccessor>();
             var context = new Mock<HttpContext>();
@@ -50,7 +61,10 @@ namespace listener.Tests
 
             request.SetupGet(x => x.Headers).Returns(headerDictionary);
             context.SetupGet(x => x.Request).Returns(request.Object);
-            contextAccessor.SetupGet(x => x.HttpContext).Returns(context.Object);
+
+            contextAccessor
+                .SetupGet(x => x.HttpContext)
+                .Returns(context.Object);
 
             return contextAccessor.Object;
         }
