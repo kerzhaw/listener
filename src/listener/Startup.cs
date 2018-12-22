@@ -33,17 +33,6 @@ namespace listener
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
-            // Create a logging provider based on the configuration information passed through the appsettings.json
-            loggerFactory.AddLambdaLogger(Configuration.GetLambdaLoggerOptions());
-
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{env.EnvironmentName ?? "Development"}.json", optional: true)
-                .AddEnvironmentVariables();
-
-            Configuration = builder.Build();
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
