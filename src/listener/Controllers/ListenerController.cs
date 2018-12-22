@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿using System;
+using System.Diagnostics;
+using System.IO;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using listener.Models;
@@ -19,11 +22,16 @@ namespace listener.Controllers
 
         private readonly IHttpContextAccessor _contextAccessor;
         private readonly ILogger<ListenerController> _logger;
+        private readonly HttpClient _httpClient;
 
-        public ListenerController(IHttpContextAccessor contextAccessor, ILogger<ListenerController> logger)
+        public ListenerController(
+            IHttpContextAccessor contextAccessor,
+            ILogger<ListenerController> logger,
+            IHttpClientFactory httpClientFactory)
         {
             _contextAccessor = contextAccessor;
             _logger = logger;
+            _httpClient = httpClientFactory.CreateClient();
         }
 
         public async Task<IActionResult> GetAsync(CancellationToken ct = default(CancellationToken))
@@ -39,6 +47,7 @@ namespace listener.Controllers
             using (var streamReader = new StreamReader(_contextAccessor.HttpContext.Request.Body))
             {
                 var message = await streamReader.ReadToEndAsync();
+                Debug.Print(message);
                 return JsonConvert.DeserializeObject<TModel>(message);
             }
         }
@@ -47,10 +56,19 @@ namespace listener.Controllers
         {
             var model = await ReadModelAsync<SubscriptionConfirmationModel>();
 
-            if (!TryValidateModel(model))
-                return BadRequest();
+            try
+            {
+                var response = await _httpClient.GetAsync(model.SubscribeURL);
 
-            return BadRequest();
+                if (!response.IsSuccessStatusCode)
+                    return BadRequest();
+
+                return Ok();
+            }
+            catch (Exception)
+            {
+                return BadRequest();
+            }
         }
 
         [HttpPost]

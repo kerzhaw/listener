@@ -64,7 +64,7 @@ namespace listener.Models
         /// The time (GMT) when the subscription confirmation was sent.
         /// </summary>
         [Required]
-        public DateTimeOffset Timestamp { get; set; }
+        public string Timestamp { get; set; }
 
         /// <summary>
         /// A value you can use with the ConfirmSubscription action to confirm 

@@ -25,6 +25,7 @@ namespace listener
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddDefaultAWSOptions(Configuration.GetAWSOptions());
             services.AddAWSService<IAmazonSimpleEmailService>();
+            services.AddHttpClient();
             services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         }
 
