@@ -1,5 +1,6 @@
 ﻿using Amazon.SimpleEmail;
 using listener.Clients;
+using listener.Processors;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -28,6 +29,10 @@ namespace listener
             services.AddAWSService<IAmazonSimpleEmailService>();
             services.TryAddSingleton<IListenerHttpClient, ListenerHttpClient>();
             services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+            services.AddScoped<IProcessor, SubscriptionConfirmationProcessor>();
+            services.AddScoped<IProcessor, NotificationProcessor>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline

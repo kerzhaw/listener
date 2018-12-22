@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -6,6 +7,7 @@ using Amazon.SimpleEmail;
 using Amazon.SimpleEmail.Model;
 using listener.Clients;
 using listener.Models;
+using listener.Processors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -18,6 +20,13 @@ namespace listener.Controllers
     [Route("api/[controller]")]
     public class ListenerController : Controller
     {
+        [HttpGet]
+        public async Task<IActionResult> GetAsync()
+        {
+            await Task.CompletedTask;
+            return Ok();
+        }
+
         public const string AwsSnsMessageTypeHeaderName = "x-amz-sns-message-type";
         public const string AwsSnsUserAgentHeaderValue = "Amazon Simple Notification Service Agent";
 
@@ -25,17 +34,20 @@ namespace listener.Controllers
         private readonly ILogger<ListenerController> _logger;
         private readonly IListenerHttpClient _httpClient;
         private readonly IAmazonSimpleEmailService _sesEmailClient;
+        private readonly IEnumerable<IProcessor> _processors;
 
         public ListenerController(
             IHttpContextAccessor contextAccessor,
             ILogger<ListenerController> logger,
             IListenerHttpClient httpClient,
-            IAmazonSimpleEmailService sesEmailClient)
+            IAmazonSimpleEmailService sesEmailClient,
+            IEnumerable<IProcessor> processors)
         {
             _contextAccessor = contextAccessor;
             _logger = logger;
             _httpClient = httpClient;
             _sesEmailClient = sesEmailClient;
+            _processors = processors;
         }
 
         private async Task<TModel> ReadModelAsync<TModel>(CancellationToken ct)

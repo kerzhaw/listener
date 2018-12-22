@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Amazon.SimpleEmail;
 using listener.Clients;
 using listener.Controllers;
+using listener.Processors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
@@ -26,13 +27,13 @@ namespace listener.Tests
         }
 
         protected ListenerController CreateController(IHttpContextAccessor contextAccessor)
-                => new ListenerController(contextAccessor, MockLogger, MockHttpClient, MockSesClient);
+                => new ListenerController(contextAccessor, MockLogger, MockHttpClient, MockSesClient, new List<IProcessor>());
 
         protected ListenerController CreateController(IHttpContextAccessor contextAccessor, IListenerHttpClient httpClient)
-            => new ListenerController(contextAccessor, MockLogger, httpClient, MockSesClient);
+            => new ListenerController(contextAccessor, MockLogger, httpClient, MockSesClient, new List<IProcessor>());
 
         protected ListenerController CreateController(IHttpContextAccessor contextAccessor, IAmazonSimpleEmailService sesClient)
-            => new ListenerController(contextAccessor, MockLogger, MockHttpClient, sesClient);
+            => new ListenerController(contextAccessor, MockLogger, MockHttpClient, sesClient, new List<IProcessor>());
 
         protected async Task<IHttpContextAccessor> CreateMockContextAccessor(
             IDictionary<string, string> headers,
