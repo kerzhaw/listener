@@ -1,9 +1,12 @@
-﻿using System.Threading;
+﻿using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
+using listener.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
+using Newtonsoft.Json;
 
 namespace listener.Controllers
 {
@@ -30,9 +33,23 @@ namespace listener.Controllers
             return Ok("It works");
         }
 
+        private async Task<TModel> ReadModelAsync<TModel>(CancellationToken ct = default(CancellationToken))
+            where TModel : class
+        {
+            using (var streamReader = new StreamReader(_contextAccessor.HttpContext.Request.Body))
+            {
+                var message = await streamReader.ReadToEndAsync();
+                return JsonConvert.DeserializeObject<TModel>(message);
+            }
+        }
+
         private async Task<IActionResult> ProcessSubscriptionConfirmationMessageType(CancellationToken ct = default(CancellationToken))
         {
-            await Task.CompletedTask;
+            var model = await ReadModelAsync<SubscriptionConfirmationModel>();
+
+            if (!TryValidateModel(model))
+                return BadRequest();
+
             return BadRequest();
         }
 

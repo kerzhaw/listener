@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using listener.Controllers;
 using Microsoft.AspNetCore.Http;
@@ -20,7 +21,7 @@ namespace listener.Tests
             mockLogger = new Mock<ILogger<ListenerController>>().Object;
         }
 
-        private IHttpContextAccessor CreateMockContextAccessor(IDictionary<string, string> headers)
+        private async Task<IHttpContextAccessor> CreateMockContextAccessor(IDictionary<string, string> headers, string jsonBody = null)
         {
             var contextAccessor = new Mock<IHttpContextAccessor>();
             var context = new Mock<HttpContext>();
@@ -29,6 +30,20 @@ namespace listener.Tests
 
             foreach (var key in headers.Keys)
                 headerDictionary.Add(key, new StringValues(headers[key]));
+
+            if (!string.IsNullOrWhiteSpace(jsonBody))
+            {
+                var stream = new MemoryStream();
+                var writer = new StreamWriter(stream);
+                await writer.WriteAsync(jsonBody);
+
+                stream.Seek(0, SeekOrigin.Begin);
+
+                request.SetupGet(x => x.Body).Returns(stream).Callback(() =>
+                {
+                    stream.Dispose();
+                });
+            }
 
             request.SetupGet(x => x.Headers).Returns(headerDictionary);
             context.SetupGet(x => x.Request).Returns(request.Object);
@@ -40,7 +55,7 @@ namespace listener.Tests
         [Fact]
         public async Task ProcessSubscriptionConfirmationMessageType_Returns_400_For_Bad_UserAgent()
         {
-            var mockContextAccessor = CreateMockContextAccessor(new Dictionary<string, string>
+            var mockContextAccessor = await CreateMockContextAccessor(new Dictionary<string, string>
             {
                 {HeaderNames.UserAgent,"Dis a bad user agent mon"}
             });
@@ -54,7 +69,7 @@ namespace listener.Tests
         [Fact]
         public async Task ProcessSubscriptionConfirmationMessageType_Returns_400_For_Missing_UserAgent()
         {
-            var mockContextAccessor = CreateMockContextAccessor(new Dictionary<string, string>());
+            var mockContextAccessor = await CreateMockContextAccessor(new Dictionary<string, string>());
 
             var controller = new ListenerController(mockContextAccessor, mockLogger);
             var result = await controller.PostAsync() as StatusCodeResult;
@@ -65,7 +80,7 @@ namespace listener.Tests
         [Fact]
         public async Task ProcessSubscriptionConfirmationMessageType_Returns_400_For_Missing_MessageType_Header()
         {
-            var mockContextAccessor = CreateMockContextAccessor(new Dictionary<string, string>{
+            var mockContextAccessor = await CreateMockContextAccessor(new Dictionary<string, string>{
                 {HeaderNames.UserAgent, ListenerController.AwsSnsUserAgentHeaderValue}
             });
 
@@ -78,7 +93,7 @@ namespace listener.Tests
         [Fact]
         public async Task ProcessSubscriptionConfirmationMessageType_Returns_400_For_Bad_MessageType_Header()
         {
-            var mockContextAccessor = CreateMockContextAccessor(new Dictionary<string, string>{
+            var mockContextAccessor = await CreateMockContextAccessor(new Dictionary<string, string>{
                 {HeaderNames.UserAgent, ListenerController.AwsSnsUserAgentHeaderValue},
                 {ListenerController.AwsSnsMessageTypeHeaderName, "Bad value"}
             });
@@ -92,9 +107,10 @@ namespace listener.Tests
         [Fact]
         public async Task ProcessSubscriptionConfirmationMessageType_Happy()
         {
-            var mockContextAccessor = CreateMockContextAccessor(new Dictionary<string, string>
+            var mockContextAccessor = await CreateMockContextAccessor(new Dictionary<string, string>
             {
-                {"x-amz-sns-message-type","SubscriptionConfirmation"}
+                {HeaderNames.UserAgent, ListenerController.AwsSnsUserAgentHeaderValue},
+                {ListenerController.AwsSnsMessageTypeHeaderName, ListenerController.AwsSnsMessageTypeHeaderValueSubscriptionConfirmation}
             });
 
             var controller = new ListenerController(mockContextAccessor, mockLogger);
