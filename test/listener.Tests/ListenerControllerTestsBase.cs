@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using Amazon.SimpleEmail;
+using listener.Clients;
 using listener.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -13,10 +15,14 @@ namespace listener.Tests
     public abstract class ListenerControllerTestsBase
     {
         protected static readonly ILogger<ListenerController> MockLogger;
+        protected static readonly IListenerHttpClient MockClient;
+        protected static readonly IAmazonSimpleEmailService MockSesClient;
 
         static ListenerControllerTestsBase()
         {
             MockLogger = new Mock<ILogger<ListenerController>>().Object;
+            MockClient = new Mock<IListenerHttpClient>().Object;
+            MockSesClient = new Mock<IAmazonSimpleEmailService>().Object;
         }
 
         protected async Task<IHttpContextAccessor> CreateMockContextAccessor(IDictionary<string, string> headers, string jsonBody = null)

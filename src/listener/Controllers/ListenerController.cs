@@ -1,8 +1,9 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Amazon.SimpleEmail;
+using Amazon.SimpleEmail.Model;
 using listener.Clients;
 using listener.Models;
 using Microsoft.AspNetCore.Http;
@@ -22,15 +23,18 @@ namespace listener.Controllers
         private readonly IHttpContextAccessor _contextAccessor;
         private readonly ILogger<ListenerController> _logger;
         private readonly IListenerHttpClient _httpClient;
+        private readonly IAmazonSimpleEmailService _sesEmailClient;
 
         public ListenerController(
             IHttpContextAccessor contextAccessor,
             ILogger<ListenerController> logger,
-            IListenerHttpClient httpClient)
+            IListenerHttpClient httpClient,
+            IAmazonSimpleEmailService sesEmailClient)
         {
             _contextAccessor = contextAccessor;
             _logger = logger;
             _httpClient = httpClient;
+            _sesEmailClient = sesEmailClient;
         }
 
         private async Task<TModel> ReadModelAsync<TModel>(CancellationToken ct)
@@ -39,7 +43,6 @@ namespace listener.Controllers
             using (var streamReader = new StreamReader(_contextAccessor.HttpContext.Request.Body))
             {
                 var message = await streamReader.ReadToEndAsync();
-                Debug.Print(message);
                 return JsonConvert.DeserializeObject<TModel>(message);
             }
         }
@@ -72,6 +75,19 @@ namespace listener.Controllers
             var emailMessageModel = JsonConvert.DeserializeObject<EmailMessageModel>(model.Message);
 
             _logger.LogInformation($"Message received: {model.Message}");
+
+            var request = new SendTemplatedEmailRequest
+            {
+                ConfigurationSetName = "MailConfigurationSet",
+                Destination = new Destination(emailMessageModel.To),
+                Source = emailMessageModel.From,
+                Template = emailMessageModel.TemplateName,
+                TemplateData = emailMessageModel.TemplateData
+            };
+
+            await _sesEmailClient.SendTemplatedEmailAsync(request, ct);
+
+            _logger.LogInformation($"Email sent: {model.Message}");
 
             return Ok();
         }
