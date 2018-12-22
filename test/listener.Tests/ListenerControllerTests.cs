@@ -88,7 +88,7 @@ namespace listener.Tests
 
             var mockSesClient = new Mock<IAmazonSimpleEmailService>();
 
-            var controller = new ListenerController(mockContextAccessor, MockLogger, MockHttpClient, mockSesClient.Object);
+            var controller = CreateController(mockContextAccessor, mockSesClient.Object);
             var result = await controller.PostAsync() as StatusCodeResult;
 
             mockSesClient.Verify(x => x.SendTemplatedEmailAsync(It.IsAny<SendTemplatedEmailRequest>(), It.IsAny<CancellationToken>()));
@@ -108,8 +108,8 @@ namespace listener.Tests
                 {ListenerController.AwsSnsMessageTypeHeaderName, SubscriptionConfirmationModel.AwsSnsMessageTypeHeaderValue}
             }, jsonBody);
 
-            var mockClient = new Mock<IListenerHttpClient>();
-            mockClient
+            var mockHttpClient = new Mock<IListenerHttpClient>();
+            mockHttpClient
                 .Setup(x => x.GetAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
                 {
@@ -117,7 +117,7 @@ namespace listener.Tests
                 })
                 .Verifiable();
 
-            var controller = CreateController(mockContextAccessor, mockClient.Object);
+            var controller = CreateController(mockContextAccessor, mockHttpClient.Object);
             var result = await controller.PostAsync() as StatusCodeResult;
 
             Assert.AreEqual(StatusCodes.Status200OK, result.StatusCode);
