@@ -9,6 +9,7 @@ using listener.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json;
 
@@ -92,32 +93,39 @@ namespace listener.Controllers
             return Ok();
         }
 
+        private bool ValidRequest(out StringValues messageType)
+        {
+            messageType = StringValues.Empty;
+            var request = _contextAccessor.HttpContext.Request;
+
+            if (!request.Headers.TryGetValue(HeaderNames.UserAgent, out var userAgent))
+                return false;
+
+            if (!userAgent.Equals(AwsSnsUserAgentHeaderValue))
+                return false;
+
+            if (!request.Headers.TryGetValue(AwsSnsMessageTypeHeaderName, out messageType))
+                return false;
+
+            return true;
+        }
+
 
         [HttpPost]
         public async Task<IActionResult> PostAsync(CancellationToken ct = default(CancellationToken))
         {
             var request = _contextAccessor.HttpContext.Request;
 
-            if (!request.Headers.TryGetValue(HeaderNames.UserAgent, out var userAgent))
+            if (!ValidRequest(out var messageType))
                 return BadRequest();
 
-            if (!userAgent.Equals(AwsSnsUserAgentHeaderValue))
-                return BadRequest();
-
-            if (!request.Headers.TryGetValue(AwsSnsMessageTypeHeaderName, out var messageType))
-                return BadRequest();
-
+            // SubscriptionConfirmation
             if (messageType.Equals(SubscriptionConfirmationModel.AwsSnsMessageTypeHeaderValue))
-            {
-                // SubscriptionConfirmation
                 return await ProcessSubscriptionConfirmationMessageType(ct);
-            }
 
+            // Notification
             if (messageType.Equals(NotificationModel.AwsSnsMessageTypeHeaderValue))
-            {
-                // Notification
                 return await ProcessNotificationMessageType(ct);
-            }
 
             return BadRequest();
         }
