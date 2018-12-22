@@ -16,7 +16,9 @@
         "Role": null,
         "Policies": ["AWSLambdaVPCAccessExecutionRole"],
         "Environment": {
-          "Variables": {}
+          "Variables": {
+            "SESRegion": "us-east-1"
+          }
         },
         "Events": {
           "PutResource": {

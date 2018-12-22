@@ -69,6 +69,7 @@ namespace listener.Controllers
         private async Task<IActionResult> ProcessNotificationMessageType(CancellationToken ct)
         {
             var model = await ReadModelAsync<NotificationModel>(ct);
+            var emailMessageModel = JsonConvert.DeserializeObject<EmailMessageModel>(model.Message);
 
             _logger.LogInformation($"Message received: {model.Message}");
 
@@ -98,7 +99,7 @@ namespace listener.Controllers
 
             if (messageType.Equals(NotificationModel.AwsSnsMessageTypeHeaderValue))
             {
-                // SubscriptionConfirmation
+                // Notification
                 return await ProcessNotificationMessageType(ct);
             }
 
